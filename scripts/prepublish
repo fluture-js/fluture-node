@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -eufo pipefail
+
+npm outdated --long
+npm whoami
+npm run build
+
+sanctuary-prepublish "$@"
