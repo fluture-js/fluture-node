@@ -1,6 +1,6 @@
 {
   "name": "fluture-node",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Common Node API's wrapped to return Fluture Futures",
   "main": "index",
   "module": "index.mjs",
