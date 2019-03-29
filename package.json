@@ -1,0 +1,40 @@
+{
+  "name": "fluture-node",
+  "version": "0.0.0",
+  "description": "Common Node API's wrapped to return Fluture Futures",
+  "main": "index",
+  "module": "index.mjs",
+  "scripts": {
+    "build": "rollup -c rollup.config.mjs",
+    "codecov": "codecov",
+    "doctest": "sanctuary-doctest",
+    "lint": "sanctuary-lint",
+    "release": "sanctuary-release",
+    "test": "npm run lint && sanctuary-test && npm run doctest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fluture-js/fluture-node.git"
+  },
+  "files": [
+    "/index.js",
+    "/index.mjs",
+    "/LICENSE",
+    "/package.json",
+    "/README.md"
+  ],
+  "author": "Aldwin Vlasblom <aldwin@avaq.it> (https://github.com/Avaq)",
+  "license": "MIT",
+  "dependencies": {},
+  "peerDependencies": {
+    "fluture": "*"
+  },
+  "devDependencies": {
+    "c8": "^3.4.0",
+    "codecov": "^3.2.0",
+    "fluture": "^11.0.1",
+    "oletus": "^1.1.5",
+    "rollup": "^1.1.2",
+    "sanctuary-scripts": "^3.1.1"
+  }
+}
