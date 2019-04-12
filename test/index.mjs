@@ -4,7 +4,7 @@ import {value} from 'fluture';
 import test from 'oletus';
 import {Readable} from 'stream';
 import {isDeepStrictEqual} from 'util';
-import {once, buffer} from '..';
+import {once, buffer, instant, immediate} from '..';
 
 const noop = () => {};
 
@@ -84,4 +84,13 @@ test ('buffer', () => {
     assertResolves (buffer (s1)) ([b1, b2]),
     assertRejects (buffer (s2)) (42),
   ]);
+});
+
+test ('instant', () => (
+  assertResolves (instant ('noodles')) ('noodles')
+));
+
+test ('immediate', () => {
+  value (eq ('should not run')) (immediate ('did run')) ();
+  return assertResolves (immediate ('results')) ('results');
 });
