@@ -77,4 +77,37 @@ export const buffer = stream => Future ((rej, res) => {
   return removeListeners;
 });
 
+//# instant :: b -> Future a b
+//.
+//. Resolves a Future with the given value in the next tick,
+//. using [`process.nextTick`][]. The scheduled job cannot be
+//. cancelled and will run before any other jobs, effectively
+//. blocking the event loop until it's completed.
+//.
+//. ```js
+//. > instant ('noodles')
+//. Future.of ('noodles')
+//. ```
+export const instant = x => Future ((rej, res) => {
+  process.nextTick (res, x);
+});
+
+//# immediate :: b -> Future a b
+//.
+//. Resolves a Future with the given value in the next tick,
+//. using [`setImmediate`][]. This job will run as soon as all
+//. other jobs are completed. When the Future is cancelled, the
+//. job is unscheduled.
+//.
+//. ```js
+//. > immediate ('results')
+//. Future.of ('results')
+//. ```
+export const immediate = x => Future ((rej, res) => {
+  const job = setImmediate (res, x);
+  return () => { clearImmediate (job); };
+});
+
 //. [Fluture]: https://github.com/fluture-js/Fluture
+//. [`process.nextTick`]: https://nodejs.org/api/process.html#process_process_nexttick_callback_args
+//. [`setImmediate`]: https://nodejs.org/api/timers.html#timers_setimmediate_callback_args
