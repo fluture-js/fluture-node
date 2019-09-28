@@ -1,10 +1,10 @@
 import {deepStrictEqual} from 'assert';
 import {EventEmitter} from 'events';
-import {value} from 'fluture';
+import fluture from 'fluture';
 import test from 'oletus';
 import {Readable} from 'stream';
 import {isDeepStrictEqual} from 'util';
-import {once, buffer, instant, immediate} from '..';
+import {once, buffer, instant, immediate} from '../index.mjs';
 
 const noop = () => {};
 
@@ -41,7 +41,7 @@ test ('once', () => {
 
   const ee1 = new EventEmitter ();
 
-  const cancel = value (noop) (once ('test') (ee1));
+  const cancel = fluture.value (noop) (once ('test') (ee1));
   eq (ee1.listenerCount ('test')) (1);
   eq (ee1.listenerCount ('error')) (1);
 
@@ -91,6 +91,6 @@ test ('instant', () => (
 ));
 
 test ('immediate', () => {
-  value (eq ('should not run')) (immediate ('did run')) ();
+  fluture.value (eq ('should not run')) (immediate ('did run')) ();
   return assertResolves (immediate ('results')) ('results');
 });

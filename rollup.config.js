@@ -1,4 +1,6 @@
-export default {
+'use strict';
+
+module.exports = {
   input: 'index.mjs',
   external: ['fluture'],
   output: {

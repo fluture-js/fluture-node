@@ -2,10 +2,11 @@
   "name": "fluture-node",
   "version": "1.1.0",
   "description": "Common Node API's wrapped to return Fluture Futures",
-  "main": "index",
+  "type": "commonjs",
+  "main": "index.mjs",
   "module": "index.mjs",
   "scripts": {
-    "build": "rollup -c rollup.config.mjs",
+    "build": "rollup -c rollup.config.js",
     "codecov": "codecov",
     "doctest": "sanctuary-doctest",
     "lint": "sanctuary-lint",
