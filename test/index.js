@@ -4,7 +4,7 @@ import fluture from 'fluture';
 import test from 'oletus';
 import {Readable} from 'stream';
 import {isDeepStrictEqual} from 'util';
-import {once, buffer, instant, immediate} from '../index.mjs';
+import {once, buffer, instant, immediate} from '../index.js';
 
 const noop = () => {};
 

@@ -1,11 +1,9 @@
-'use strict';
-
-module.exports = {
-  input: 'index.mjs',
+export default {
+  input: 'index.js',
   external: ['fluture'],
   output: {
     format: 'cjs',
-    file: 'index.js',
+    file: 'index.cjs',
     interop: false,
   },
 };

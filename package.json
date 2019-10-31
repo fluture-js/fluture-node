@@ -2,9 +2,9 @@
   "name": "fluture-node",
   "version": "1.1.0",
   "description": "Common Node API's wrapped to return Fluture Futures",
-  "type": "commonjs",
-  "main": "index.mjs",
-  "module": "index.mjs",
+  "type": "module",
+  "main": "index.cjs",
+  "module": "index.js",
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "codecov": "codecov",
@@ -19,7 +19,7 @@
   },
   "files": [
     "/index.js",
-    "/index.mjs",
+    "/index.cjs",
     "/LICENSE",
     "/package.json",
     "/README.md"
