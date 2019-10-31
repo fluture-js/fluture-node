@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-echo 'Doctests cannot run on mjs files. Skipping :('
+echo 'Doctests do not support asynchronous assertions. Skipping :('
