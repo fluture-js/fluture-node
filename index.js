@@ -4,7 +4,7 @@
 //.
 //. ## API
 
-import Future from 'fluture';
+import Future from 'fluture/index.js';
 
 //# once :: String -> EventEmitter -> Future Error a
 //.
@@ -90,6 +90,7 @@ export const buffer = stream => Future ((rej, res) => {
 //. ```
 export const instant = x => Future ((rej, res) => {
   process.nextTick (res, x);
+  return () => {};
 });
 
 //# immediate :: b -> Future a b

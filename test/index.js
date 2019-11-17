@@ -1,40 +1,15 @@
-import {deepStrictEqual} from 'assert';
 import {EventEmitter} from 'events';
-import {value} from 'fluture';
+import {reject, resolve, value} from 'fluture/index.js';
 import test from 'oletus';
 import {Readable} from 'stream';
-import {isDeepStrictEqual} from 'util';
-import {once, buffer, instant, immediate} from '..';
+import {equivalence, equality as eq} from 'fluture/test/assertions.js';
+
+import {once, buffer, instant, immediate} from '../index.js';
+
+const assertResolves = a => b => equivalence (a) (resolve (b));
+const assertRejects = a => b => equivalence (a) (reject (b));
 
 const noop = () => {};
-
-const eq = actual => expected => {
-  deepStrictEqual (actual, expected);
-};
-
-const assertResolves = m => x => new Promise ((res, rej) => {
-  m.fork (y => {
-    rej (new Error ('Rejected with ' + y));
-  }, y => {
-    if (isDeepStrictEqual (y, x)) {
-      res ();
-    } else {
-      rej (new Error ('Resolved with ' + JSON.stringify (y)));
-    }
-  });
-});
-
-const assertRejects = m => x => new Promise ((res, rej) => {
-  m.fork (y => {
-    if (isDeepStrictEqual (y, x)) {
-      res ();
-    } else {
-      rej (new Error ('Rejected with ' + JSON.stringify (y)));
-    }
-  }, y => {
-    rej (new Error ('Resolved with ' + y));
-  });
-});
 
 test ('once', () => {
   eq (typeof once) ('function');
