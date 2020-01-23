@@ -1,6 +1,6 @@
 //. # Fluture Node
 //.
-//. Common Node API's wrapped to return [Fluture][] Futures.
+//. FP-style HTTP and streaming utils for Node based on [Fluture][].
 //.
 //. ```console
 //. $ npm install fluture fluture-node

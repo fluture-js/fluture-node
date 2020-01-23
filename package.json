@@ -1,7 +1,18 @@
 {
   "name": "fluture-node",
   "version": "2.0.0",
-  "description": "Common Node API's wrapped to return Fluture Futures",
+  "description": "FP-style HTTP and streaming utils for Node based on Fluture",
+  "tags": [
+    "buffer",
+    "events",
+    "fluture",
+    "http",
+    "https",
+    "node",
+    "request",
+    "streams",
+    "timers"
+  ],
   "type": "module",
   "main": "index.cjs",
   "module": "index.js",
