@@ -11,4 +11,4 @@ c8 --check-coverage \
    --reporter lcov \
    node --experimental-modules \
         --no-warnings \
-        -- ./node_modules/.bin/oletus
+        ./node_modules/.bin/oletus
