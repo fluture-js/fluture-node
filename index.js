@@ -7,6 +7,13 @@
 //. ```
 //.
 //. ## API
+//.
+//. Note: All examples assume that the following code is included:
+//.
+//. ```js
+//. > import {value} from 'fluture/index.js'
+//. > const show = m => { value (log ('result')) (m) }
+//. ```
 
 import http from 'http';
 import https from 'https';
@@ -35,10 +42,12 @@ import {
 //. itself from the event emitter.
 //.
 //. ```js
-//. > const emitter = new EventEmitter ();
-//. > setTimeout (() => emitter.emit ('answer', 42), 100);
-//. > once ('answer') (emitter);
-//. Future.of (42);
+//. > import {EventEmitter} from 'events'
+//. > const emitter = new EventEmitter ()
+//. > setTimeout (() => emitter.emit ('answer', 42), 100)
+//. > show (once ('answer') (emitter))
+//. undefined
+//. [result]: 42
 //. ```
 export const once = event => emitter => Future ((rej, res) => {
   const removeListeners = () => {
@@ -67,8 +76,9 @@ export const once = event => emitter => Future ((rej, res) => {
 //. with an Error if the encoding is unknown.
 //.
 //. ```js
-//. > encode ('utf8') (Buffer.from ('Hello world!'));
-//. 'Hello world!'
+//. > show (encode ('utf8') (Buffer.from ('Hello world!')))
+//. [result]: 'Hello world!'
+//. undefined
 //. ```
 export const encode = encoding => buffer => (
   mapRej (e => new Error (e.message))
@@ -107,14 +117,15 @@ export const emptyStream = streamOf (Buffer.alloc (0));
 //. itself from the Stream.
 //.
 //. ```js
-//. > const stream = new Readable ({read: () => {}});
+//. > const stream = new Readable ({read: () => {}})
 //. > setTimeout (() => {
-//. .   stream.push ('hello');
-//. .   stream.push ('world');
-//. .   stream.push (null);
-//. . }, 100);
-//. > buffer (stream);
-//. Future.of ([Buffer.from ('hello'), Buffer.from ('world')]);
+//. .   stream.push ('hello')
+//. .   stream.push ('world')
+//. .   stream.push (null)
+//. . }, 100)
+//. > show (buffer (stream))
+//. undefined
+//. [result]: [Buffer.from ('hello'), Buffer.from ('world')]
 //. ```
 export const buffer = stream => Future ((rej, res) => {
   const chunks = [];
@@ -158,8 +169,9 @@ export const bufferString = charset => stream => (
 //. blocking the event loop until it's completed.
 //.
 //. ```js
-//. > instant ('noodles')
-//. Future.of ('noodles')
+//. > show (instant ('noodles'))
+//. undefined
+//. [result]: 'noodles'
 //. ```
 export const instant = x => Future ((rej, res) => {
   process.nextTick (res, x);
@@ -174,8 +186,9 @@ export const instant = x => Future ((rej, res) => {
 //. job is unscheduled.
 //.
 //. ```js
-//. > immediate ('results')
-//. Future.of ('results')
+//. > show (immediate ('results'))
+//. undefined
+//. [result]: 'results'
 //. ```
 export const immediate = x => Future ((rej, res) => {
   const job = setImmediate (res, x);
@@ -188,23 +201,23 @@ export const immediate = x => Future ((rej, res) => {
 //. below, in order to cover a wide variety of HTTP-related use cases.
 //.
 //. ```js
-//. import {map, chain, chainRej, encase, fork} from 'fluture/index.js';
+//. import {map, chain, chainRej, encase, fork} from 'fluture/index.js'
 //. import {retrieve,
 //.         acceptStatus,
 //.         autoBufferResponse,
-//.         responseToError} from './index.js';
+//.         responseToError} from './index.js'
 //.
 //. const rejectUnacceptable = res => (
 //.   acceptStatus (200) (res)
 //.   .pipe (chainRej (responseToError))
-//. );
+//. )
 //.
 //. retrieve ('https://api.github.com/users/Avaq') ({'User-Agent': 'Avaq'})
 //. .pipe (chain (rejectUnacceptable))
 //. .pipe (chain (autoBufferResponse))
 //. .pipe (chain (encase (JSON.parse)))
 //. .pipe (map (avaq => avaq.name))
-//. .pipe (fork (console.error) (console.log));
+//. .pipe (fork (console.error) (console.log))
 //. ```
 //.
 //. The example above will either:
@@ -267,17 +280,17 @@ const getRequestModule = protocol => {
 //. [IncomingMessage][]. If the Future is cancelled, the request is aborted.
 //.
 //. ```js
-//. import {attempt, chain} from 'fluture/index.js';
-//. import {createReadStream} from 'fs';
+//. import {attempt, chain} from 'fluture/index.js'
+//. import {createReadStream} from 'fs'
 //.
 //. const sendBinary = request ({
 //.   method: 'POST',
 //.   headers: {'Transfer-Encoding': 'chunked'},
-//. });
+//. })
 //.
-//. const eventualBody = attempt (() => createReadStream ('./data.bin'));
+//. const eventualBody = attempt (() => createReadStream ('./data.bin'))
 //.
-//. eventualBody.pipe (chain (sendBinary ('https://example.com')));
+//. eventualBody.pipe (chain (sendBinary ('https://example.com')))
 //. ```
 //.
 //. If you want to use this function to transfer a stream of data, don't forget
@@ -346,7 +359,7 @@ export const send = mime => method => url => extraHeaders => buf => {
 //. sendJson ('PUT')
 //.          ('https://example.com/users/bob')
 //.          ({Authorization: 'Bearer asd123'})
-//.          ({name: 'Bob', email: 'bob@example.com'});
+//.          ({name: 'Bob', email: 'bob@example.com'})
 //. ```
 export const sendJson = method => url => headers => json => {
   const buf = Buffer.from (JSON.stringify (json));
@@ -365,7 +378,7 @@ export const sendJson = method => url => headers => json => {
 //. sendForm ('POST')
 //.          ('https://example.com/users/create')
 //.          ({})
-//.          ({name: 'Bob', email: 'bob@example.com'});
+//.          ({name: 'Bob', email: 'bob@example.com'})
 //. ```
 export const sendForm = method => url => headers => form => {
   const buf = Buffer.from (qs.stringify (form));
