@@ -31,6 +31,17 @@ import {
   resolve,
 } from 'fluture/index.js';
 
+// When this file is running as a doctest, patch the Buffer prototype to make
+// Doctest understand how to show and compare buffers.
+if (__doctest) {
+  Buffer.prototype['@@show'] = function() {
+    return `Buffer.from (${this.toString ('utf8')}, 'utf8')`;
+  };
+  Buffer.prototype['fantasy-land/equals'] = function(buf) {
+    return this.equals (buf);
+  };
+}
+
 //. ### EventEmitter
 
 //# once :: String -> EventEmitter -> Future Error a
