@@ -157,7 +157,7 @@ test ('request', () => Promise.all ([
                 (Object.assign (new Error ('connect ECONNREFUSED 127.0.0.1:443'), {
                   address: '127.0.0.1',
                   code: 'ECONNREFUSED',
-                  errno: 'ECONNREFUSED',
+                  errno: -111,
                   port: 443,
                   syscall: 'connect',
                 })),
