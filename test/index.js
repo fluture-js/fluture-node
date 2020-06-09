@@ -157,7 +157,7 @@ test ('request', () => Promise.all ([
                 (Object.assign (new Error ('connect ECONNREFUSED 127.0.0.1:443'), {
                   address: '127.0.0.1',
                   code: 'ECONNREFUSED',
-                  errno: 'ECONNREFUSED',
+                  errno: -111,
                   port: 443,
                   syscall: 'connect',
                 })),
@@ -231,15 +231,15 @@ test ('acceptStatus', () => Promise.all ([
                  (fl.reject ('hello')),
 ]));
 
-test ('responseToError', () => {
-  assertResolves (fl.chain (fn.responseToError) (mockResponse ({code: 500, message: 'Internal Server Error', headers: responseHeaders})
-                                                  (Buffer.from ('Dear user,\n\nEverything broke down.\nWe are sorry.'))))
-                 (new Error (
-                   'Unexpected Internal Server Error (500) response. Response body:\n' +
-                   '\n' +
-                   '  Dear user,\n' +
-                   '  \n' +
-                   '  Everything broke down.\n' +
-                   '  We are sorry.'
-                 ));
-});
+test ('responseToError', () => (
+  assertRejects (fl.chain (fn.responseToError) (mockResponse ({code: 500, message: 'Internal Server Error', headers: responseHeaders})
+                                                             (Buffer.from ('Dear user,\n\nEverything broke down.\nWe are sorry.'))))
+                (new Error (
+                  'Unexpected Internal Server Error (500) response. Response body:\n' +
+                  '\n' +
+                  '  Dear user,\n' +
+                  '  \n' +
+                  '  Everything broke down.\n' +
+                  '  We are sorry.'
+                ))
+));
