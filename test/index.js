@@ -1,6 +1,6 @@
 import http from 'http';
 import {EventEmitter} from 'events';
-import * as fl from 'fluture/index.js';
+import * as fl from 'fluture';
 import test from 'oletus';
 import {Readable} from 'stream';
 import {equivalence, equality as eq} from 'fluture/test/assertions.js';
