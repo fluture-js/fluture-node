@@ -54,6 +54,6 @@
     "fluture": "^13.0.0",
     "oletus": "^3.0.0",
     "rollup": "^2.0.0",
-    "sanctuary-scripts": "^4.0.0"
+    "sanctuary-scripts": "github:sanctuary-js/sanctuary-scripts#avaq/async-doctests"
   }
 }
