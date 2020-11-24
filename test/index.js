@@ -33,10 +33,10 @@ const disposeTestServer = ({server}) => fl.node (server.close.bind (server));
 const withTestServer = fl.hook (acquireTestServer) (disposeTestServer);
 
 const mockRequest = eventualBody => withTestServer (({url}) => (
-  fl.chain (fn.request ({headers: {
+  fn.sendRequest (fn.Request ({headers: {
     'Connection': 'close',
     'Transfer-Encoding': 'chunked',
-  }}) (url)) (eventualBody)
+  }}) (url) (eventualBody))
 ));
 
 const responseHeaders = {
@@ -46,11 +46,13 @@ const responseHeaders = {
   'transfer-encoding': 'chunked',
 };
 
-const mockResponse = ({code = 200, message = 'OK', headers = responseHeaders}) => body => fl.map (stream => {
+const dudRequest = fn.Request ({}) ('https://example.com') (fn.emptyStream);
+
+const mockResponse = ({code = 200, message = 'OK', headers = responseHeaders, request = dudRequest}) => body => fl.map (stream => {
   stream.headers = headers;
   stream.statusCode = code;
   stream.statusMessage = message;
-  return stream;
+  return fn.Response (request) (stream);
 }) (fn.streamOf (body));
 
 test ('once', () => {
@@ -152,30 +154,23 @@ test ('immediate', () => {
   return assertResolves (fn.immediate ('results')) ('results');
 });
 
-test ('request', () => Promise.all ([
-  assertRejects (fl.chain (fn.request ({}) ('https://localhost')) (fn.emptyStream))
-                (Object.assign (new Error ('connect ECONNREFUSED 127.0.0.1:443'), {
-                  address: '127.0.0.1',
-                  code: 'ECONNREFUSED',
-                  errno: -111,
-                  port: 443,
-                  syscall: 'connect',
-                })),
-  assertRejects (fl.chain (fn.request ({}) ('ftp://localhost')) (fn.emptyStream))
-                (new Error ("Unsupported protocol 'ftp:'")),
-  assertResolves (fl.chain (fn.bufferString ('utf8')) (mockRequest (fn.emptyStream)))
-                 ('GET/'),
-  assertResolves (fl.chain (fn.bufferString ('utf8')) (mockRequest (fn.streamOf (Buffer.from ('hello')))))
-                 ('GET/hello'),
-]));
+test ('Request', () => {
+  const options = {};
+  const url = 'https://example.com';
+  const body = fn.emptyStream;
+  const request = fn.Request (options) (url) (body);
+  eq (fn.Request.options (request)) (options);
+  eq (fn.Request.url (request)) (url);
+  eq (fn.Request.body (request)) (body);
+});
 
-test ('request cancellation', () => new Promise ((res, rej) => {
-  const cancel = fl.fork (rej)
-                         (rej)
-                         (fl.chain (fn.request ({}) ('https://localhost')) (fn.emptyStream));
-  cancel ();
-  setTimeout (res, 1000);
-}));
+test ('Response', () => {
+  const request = fn.Request ({}) ('https://example.com') (fn.emptyStream);
+  const message = fn.emptyStream;
+  const response = fn.Response (request) (message);
+  eq (fn.Response.request (response)) (request);
+  eq (fn.Response.message (response)) (message);
+});
 
 test ('bufferResponse', () => Promise.all ([
   assertResolves (fl.chain (fn.bufferResponse ('utf8')) (mockRequest (fn.emptyStream)))
@@ -186,6 +181,31 @@ test ('bufferResponse', () => Promise.all ([
 
 const thenBuffer = fl.bichain (res => fl.swap (fn.bufferResponse ('utf8') (res)))
                               (fn.bufferResponse ('utf8'));
+
+test ('sendRequest', () => Promise.all ([
+  assertRejects (fn.sendRequest (fn.Request ({}) ('https://localhost') (fn.emptyStream)))
+                (Object.assign (new Error ('connect ECONNREFUSED 127.0.0.1:443'), {
+                  address: '127.0.0.1',
+                  code: 'ECONNREFUSED',
+                  errno: -111,
+                  port: 443,
+                  syscall: 'connect',
+                })),
+  assertRejects (fn.sendRequest (fn.Request ({}) ('ftp://localhost') (fn.emptyStream)))
+                (new Error ("Unsupported protocol 'ftp:'")),
+  assertResolves (thenBuffer (mockRequest (fn.emptyStream)))
+                 ('GET/'),
+  assertResolves (thenBuffer (mockRequest (fn.streamOf (Buffer.from ('hello')))))
+                 ('GET/hello'),
+]));
+
+test ('request cancellation', () => new Promise ((res, rej) => {
+  const cancel = fl.fork (rej)
+                         (rej)
+                         (fn.sendRequest (fn.Request ({}) ('https://localhost') (fn.emptyStream)));
+  cancel ();
+  setTimeout (res, 1000);
+}));
 
 test ('retrieve', () => Promise.all ([
   assertResolves (withTestServer (({url}) => thenBuffer (fn.retrieve (url) ({}))))

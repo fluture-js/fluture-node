@@ -20,6 +20,7 @@ import {
   encase,
   map,
   mapRej,
+  pap,
   reject,
   resolve,
 } from 'fluture/index.js';
@@ -96,7 +97,7 @@ export const streamOf = encase (buf => new Readable ({
 //# emptyStream :: Future a (Readable Buffer)
 //.
 //. A [Readable][] stream which ends after emiting zero bytes. Can be useful
-//. as an empty [`request`](#request) body, for example.
+//. as an empty [`Request`](#Request) body, for example.
 export const emptyStream = streamOf (Buffer.alloc (0));
 
 //# buffer :: Readable a -> Future Error (Array a)
@@ -188,7 +189,7 @@ export const immediate = x => Future ((rej, res) => {
 //. below, in order to cover a wide variety of HTTP-related use cases.
 //.
 //. ```js
-//. import {map, chain, chainRej, encase, fork} from 'fluture/index.js';
+//. import {map, chain, chainRej, encase, fork} from 'fluture';
 //. import {retrieve,
 //.         acceptStatus,
 //.         autoBufferResponse,
@@ -252,7 +253,59 @@ const getRequestModule = protocol => {
   }
 };
 
-//# request :: Object -> Url -> Readable Buffer -> Future Error IncomingMessage
+//# Request :: Object -> Url -> Future Error (Readable Buffer) -> Request
+//.
+//. Constructs a value of type Request to be used as an argument for
+//. functions such as [`sendRequest`](#sendRequest).
+//.
+//. Takes the following arguments:
+//.
+//. 1. An Object containing [http options][].
+//. 2. A String containing the request URL.
+//. 3. A Future of a [Readable][] stream of [Buffer][]s to be used as the
+//.    request body. Note that the Future must produce a brand new Stream
+//.    every time it is forked, or if it can't, it is expected to reject
+//.    with a value of type Error.
+//.
+//. See [`sendRequest`](#sendRequest) for a usage example.
+export const Request = options => url => body => ({options, url, body});
+
+//# Request.options :: Request -> Object
+//.
+//. Get the options out of a Request.
+Request.options = ({options}) => options;
+
+//# Request.url :: Request -> Url
+//.
+//. Get the url out of a Request.
+Request.url = ({url}) => url;
+
+//# Request.body :: Request -> Future Error (Readable Buffer)
+//.
+//. Get the body out of a Request.
+Request.body = ({body}) => body;
+
+//# Response :: Request -> IncomingMessage -> Response
+//.
+//. Constructs a value of type Response. These values are typically created
+//. for you by functions such as [`sendRequest`](#sendRequest).
+//. Takes the following arguments:
+//.
+//. 1. A [Request](#Request).
+//. 2. An [IncomingMessage][] assumed to belong to the Request.
+export const Response = request => message => ({request, message});
+
+//# Response.request :: Response -> Request
+//.
+//. Get the request out of a Response.
+Response.request = ({request}) => request;
+
+//# Response.message :: Response -> IncomingMessage
+//.
+//. Get the message out of a Response.
+Response.message = ({message}) => message;
+
+//# sendRequest :: Request -> Future Error Response
 //.
 //. This is the "lowest level" function for making HTTP requests. It does not
 //. handle buffering, encoding, content negotiation, or anything really.
@@ -261,44 +314,49 @@ const getRequestModule = protocol => {
 //. * [`send`](#send): Make a generic HTTP request.
 //. * [`retrieve`](#retrieve): Make a GET request.
 //.
-//. Given an Object of [http options][], a String containing the request URL,
-//. and a [Readable][] stream of [Buffer][]s to be sent as the request body,
-//. returns a Future which makes an HTTP request and resolves with its
-//. [IncomingMessage][]. If the Future is cancelled, the request is aborted.
+//. Given a [Request](#Request), returns a Future which makes an HTTP request
+//. and resolves with the resulting [Response](#Response).
+//. If the Future is cancelled, the request is aborted.
 //.
 //. ```js
-//. import {attempt, chain} from 'fluture/index.js';
+//. import {attempt} from 'fluture';
 //. import {createReadStream} from 'fs';
 //.
-//. const sendBinary = request ({
+//. const BinaryPostRequest = Request ({
 //.   method: 'POST',
 //.   headers: {'Transfer-Encoding': 'chunked'},
 //. });
 //.
 //. const eventualBody = attempt (() => createReadStream ('./data.bin'));
 //.
-//. eventualBody.pipe (chain (sendBinary ('https://example.com')));
+//. sendRequest (BinaryPostRequest ('https://example.com') (eventualBody));
 //. ```
 //.
 //. If you want to use this function to transfer a stream of data, don't forget
 //. to set the Transfer-Encoding header to "chunked".
-export const request = options => url => body => {
-  const location = new URL (url);
-  const makeRequest = lib => Future ((rej, res) => {
-    const req = lib.request (location, options);
-    req.once ('response', res);
-    pipeline (body, req, e => e && rej (e));
+export const sendRequest = request => {
+  const location = new URL (Request.url (request));
+  const makeRequest = lib => stream => Future ((rej, res) => {
+    const req = lib.request (location, Request.options (request));
+    const onResponse = response => res (Response (request) (response));
+    req.once ('response', onResponse);
+    pipeline (stream, req, e => e && rej (e));
     return () => {
-      req.removeListener ('response', res);
+      req.removeListener ('response', onResponse);
       req.abort ();
     };
   });
-  return chain (makeRequest) (getRequestModule (location.protocol));
+  return (
+    getRequestModule (location.protocol)
+    .pipe (map (makeRequest))
+    .pipe (pap (Request.body (request)))
+    .pipe (chain (x => x))
+  );
 };
 
-//# retrieve :: Url -> StrMap String -> Future Error IncomingMessage
+//# retrieve :: Url -> StrMap String -> Future Error Response
 //.
-//. A version of [`request`](#request) specialized in the `GET` method.
+//. A version of [`sendRequest`](#sendRequest) specialized in the `GET` method.
 //.
 //. Given a URL and a StrMap of request headers, returns a Future which
 //. makes a GET requests to the given resource.
@@ -307,13 +365,14 @@ export const request = options => url => body => {
 //. retrieve ('https://api.github.com/users/Avaq') ({'User-Agent': 'Avaq'})
 //. ```
 export const retrieve = url => headers => (
-  chain (request ({headers}) (url)) (emptyStream)
+  sendRequest (Request ({headers}) (url) (emptyStream))
 );
 
-//# send :: Mimetype -> Method -> Url -> StrMap String -> Buffer -> Future Error IncomingMessage
+//# send :: Mimetype -> Method -> Url -> StrMap String -> Buffer -> Future Error Response
 //.
-//. A version of [`request`](#request) for sending arbitrary data to a server.
-//. There's also more specific versions for sending common types of data:
+//. A version of [`sendRequest`](#sendRequest) for sending arbitrary data to
+//. a server. There's also more specific versions for sending common types of
+//. data:
 //.
 //. * [`sendJson`](#sendJson) sends JSON stringified data.
 //. * [`sendForm`](#sendForm) sends form encoded data.
@@ -331,10 +390,10 @@ export const send = mime => method => url => extraHeaders => buf => {
     'Content-Type': mime,
     'Content-Length': buf.byteLength,
   }, extraHeaders);
-  return chain (request ({method, headers}) (url)) (streamOf (buf));
+  return sendRequest (Request ({method, headers}) (url) (streamOf (buf)));
 };
 
-//# sendJson :: Method -> String -> StrMap String -> JsonValue -> Future Error IncomingMessage
+//# sendJson :: Method -> String -> StrMap String -> JsonValue -> Future Error Response
 //.
 //. A version of [`send`](#send) specialized in sending JSON.
 //.
@@ -353,7 +412,7 @@ export const sendJson = method => url => headers => json => {
   return send (mimeTypes.json) (method) (url) (headers) (buf);
 };
 
-//# sendForm :: Method -> String -> StrMap String -> JsonValue -> Future Error IncomingMessage
+//# sendForm :: Method -> String -> StrMap String -> JsonValue -> Future Error Response
 //.
 //. A version of [`send`](#send) specialized in sending form data.
 //.
@@ -372,60 +431,85 @@ export const sendForm = method => url => headers => form => {
   return send (mimeTypes.form) (method) (url) (headers) (buf);
 };
 
-//# acceptStatus :: Number -> IncomingMessage -> Future IncomingMessage IncomingMessage
+//# acceptStatus :: Number -> Response -> Future Response Response
 //.
-//. This function "tags" an [IncomingMessage][] based on a given status code.
+//. This function "tags" a [Response](#Response) based on a given status code.
 //. If the response status matches the given status code, the returned Future
 //. will resolve. If it doesn't, the returned Future will reject.
 //.
-//. The idea is that you can compose this function with one that returns an
-//. IncomingMessage, and reject any responses that don't meet the expected
-//. status code. In combination with [`responseToError`](#responseToError),
-//. you can then flatten it back into the outer Future.
-//.
-//. The usage example under the [Http](#http) section shows this.
+//. The idea is that you can compose this function with one that returns a
+//. Response, and reject any responses that don't meet the expected status
+//. code.
+
+//. In combination with [`responseToError`](#responseToError), you can then
+//. flatten it back into the outer Future. The usage example under the
+//. [Http](#http) section shows this.
 export const acceptStatus = code => res => (
-  code === res.statusCode ? resolve (res) : reject (res)
+  code === (Response.message (res)).statusCode ? resolve (res) : reject (res)
 );
 
-//# bufferResponse :: Charset -> IncomingMessage -> Future Error String
+//# bufferMessage :: Charset -> IncomingMessage -> Future Error String
 //.
 //. A version of [`buffer`](#buffer) specialized in [IncomingMessage][]s.
 //.
-//. See also [`autoBufferResponse`](#autoBufferResponse).
+//. See also [`bufferResponse`](#bufferResponse) and
+//. [`autoBufferMessage`](#autoBufferMessage).
 //.
 //. Given a charset and an IncomingMessage, returns a Future with the buffered,
 //. encoded, message body.
-export const bufferResponse = charset => message => (
+export const bufferMessage = charset => message => (
   mapRej (e => new Error ('Failed to buffer response: ' + e.message))
          (bufferString (charset) (message))
 );
 
-//# autoBufferResponse :: IncomingMessage -> Future Error String
+//# bufferResponse :: Charset -> Response -> Future Error String
+//.
+//. A composition of [`Response.message`](#Response.message) and
+//. [`bufferMessage`](#bufferMessage) for your convenience.
+//.
+//. See also [autoBufferResponse](#autoBufferResponse).
+export const bufferResponse = charset => response => (
+  bufferMessage (charset) (Response.message (response))
+);
+
+//# autoBufferMessage :: IncomingMessage -> Future Error String
 //.
 //. Given an IncomingMessage, buffers and decodes the message body using the
 //. charset provided in the message headers. Falls back to UTF-8 if the
 //. charset was not provided.
 //.
 //. Returns a Future with the buffered, encoded, message body.
-export const autoBufferResponse = message => {
+//.
+//. See also [bufferMessage](#bufferMessage).
+export const autoBufferMessage = message => {
   const contentType = message.headers['content-type'] || defaultContentType;
   const parsed = charsetRegex.exec (contentType);
   const charset = parsed == null ? defaultCharset : parsed[1];
-  return bufferResponse (charset) (message);
+  return bufferMessage (charset) (message);
 };
 
-//# responseToError :: IncomingMessage -> Future Error a
+//# autoBufferResponse :: Response -> Future Error String
 //.
-//. Given a response, returns a *rejected* Future of an instance of Error
-//. with a message based on the content of the response.
-export const responseToError = message => (
-  autoBufferResponse (message)
+//. A composition of [`Response.message`](#Response.message) and
+//. [`autoBufferMessage`](#autoBufferMessage) for your convenience.
+//.
+//. See also [bufferResponse](#bufferResponse).
+export const autoBufferResponse = response => (
+  autoBufferMessage (Response.message (response))
+);
+
+//# responseToError :: Response -> Future Error a
+//.
+//. Given a [Response](#Response), returns a *rejected* Future of an instance
+//. of Error with a message based on the content of the response.
+export const responseToError = response => {
+  const message = Response.message (response);
+  return autoBufferMessage (message)
   .pipe (chain (body => reject (new Error (
     `Unexpected ${message.statusMessage} (${message.statusCode}) response. ` +
     `Response body:\n\n${body.split ('\n').map (x => `  ${x}`).join ('\n')}`
-  ))))
-);
+  ))));
+};
 
 //. [`process.nextTick`]: https://nodejs.org/api/process.html#process_process_nexttick_callback_args
 //. [`setImmediate`]: https://nodejs.org/api/timers.html#timers_setimmediate_callback_args
