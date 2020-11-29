@@ -1,9 +1,9 @@
-import http from 'http';
 import {EventEmitter} from 'events';
 import * as fl from 'fluture';
 import test from 'oletus';
 import {Readable} from 'stream';
 import {equivalence, equality as eq} from 'fluture/test/assertions.js';
+import {withTestServer} from './server.js';
 
 import * as fn from '../index.js';
 
@@ -12,31 +12,11 @@ const assertRejects = a => b => equivalence (a) (fl.reject (b));
 
 const noop = () => {};
 
-const acquireTestServer = fl.node (done => {
-  const server = http.createServer ((req, res) => {
-    fl.fork (e => {
-      res.writeHead (500, {'Content-Type': 'text/plain'});
-      res.end ('Bad request: ' + String (e));
-    }) (body => {
-      res.writeHead (200, {'Content-Type': 'text/plain', 'Date': 'now'});
-      res.end (Buffer.from (`${req.method}/${body}`));
-    }) (fn.bufferString ('utf8') (req));
-  });
-  server.listen (() => {
-    const {port} = server.address ();
-    done (null, {url: `http://localhost:${port}`, server});
-  });
-});
-
-const disposeTestServer = ({server}) => fl.node (server.close.bind (server));
-
-const withTestServer = fl.hook (acquireTestServer) (disposeTestServer);
-
 const mockRequest = eventualBody => withTestServer (({url}) => (
   fn.sendRequest (fn.Request ({headers: {
     'Connection': 'close',
     'Transfer-Encoding': 'chunked',
-  }}) (url) (eventualBody))
+  }}) (`${url}/echo`) (eventualBody))
 ));
 
 const responseHeaders = {
@@ -208,22 +188,22 @@ test ('request cancellation', () => new Promise ((res, rej) => {
 }));
 
 test ('retrieve', () => Promise.all ([
-  assertResolves (withTestServer (({url}) => thenBuffer (fn.retrieve (url) ({}))))
+  assertResolves (withTestServer (({url}) => thenBuffer (fn.retrieve (`${url}/echo`) ({}))))
                  ('GET/'),
 ]));
 
 test ('send', () => Promise.all ([
-  assertResolves (withTestServer (({url}) => thenBuffer (fn.send ('text/plain') ('POST') (url) ({}) (Buffer.from ('hello')))))
+  assertResolves (withTestServer (({url}) => thenBuffer (fn.send ('text/plain') ('POST') (`${url}/echo`) ({}) (Buffer.from ('hello')))))
                  ('POST/hello'),
 ]));
 
 test ('sendJson', () => Promise.all ([
-  assertResolves (withTestServer (({url}) => thenBuffer (fn.sendJson ('POST') (url) ({}) ({message: 'hello'}))))
+  assertResolves (withTestServer (({url}) => thenBuffer (fn.sendJson ('POST') (`${url}/echo`) ({}) ({message: 'hello'}))))
                  ('POST/{"message":"hello"}'),
 ]));
 
 test ('sendForm', () => Promise.all ([
-  assertResolves (withTestServer (({url}) => thenBuffer (fn.sendForm ('POST') (url) ({}) ({message: 'hello'}))))
+  assertResolves (withTestServer (({url}) => thenBuffer (fn.sendForm ('POST') (`${url}/echo`) ({}) ({message: 'hello'}))))
                  ('POST/message=hello'),
 ]));
 
