@@ -25,6 +25,8 @@ import {
   resolve,
 } from 'fluture/index.js';
 
+const hasProp = k => o => Object.prototype.hasOwnProperty.call (o, k);
+
 //. ### EventEmitter
 
 //# once :: String -> EventEmitter -> Future Error a
@@ -431,22 +433,61 @@ export const sendForm = method => url => headers => form => {
   return send (mimeTypes.form) (method) (url) (headers) (buf);
 };
 
+//# matchStatus :: (Response -> a) -> StrMap (Response -> a) -> Response -> a
+//.
+//. Transform a [`Response`](#Response) based on its status code.
+//.
+//. ```js
+//. import {chain} from 'fluture';
+//.
+//. const processResponse = matchStatus (responseToError) ({
+//.   200: autoBufferResponse,
+//. });
+//.
+//. chain (processResponse) (retreive ('https://example.com'));
+//. ```
+//.
+//. This is kind of like a `switch` statement on the status code of the
+//. Response message. Or, if you will, a pattern match against the
+//. Response type if you imagine it being tagged via the status code.
+//.
+//. The first argument is the "default" case, and the second argument is a
+//. map of status codes to functions that should have the same type as the
+//. first argument.
+//.
+//. The resulting function `Response -> a` has the same signature as the input
+//. functions, meaning you can use `matchStatus` *again* to "extend" the
+//. pattern by passing the old pattern as the "default" case for the new one:
+//.
+//. ```js
+//. import {reject} from 'fluture';
+//.
+//. matchStatus (processResponse) ({
+//.   404: () => reject (new Error ('Example not found!')),
+//. });
+//. ```
+export const matchStatus = f => fs => res => {
+  const {statusCode} = Response.message (res);
+  return (hasProp (statusCode) (fs) ? fs[statusCode] : f) (res);
+};
+
 //# acceptStatus :: Number -> Response -> Future Response Response
 //.
 //. This function "tags" a [Response](#Response) based on a given status code.
 //. If the response status matches the given status code, the returned Future
 //. will resolve. If it doesn't, the returned Future will reject.
 //.
+//. See also [`matchStatus`](#matchStatus), which will probably be more useful
+//. in most cases.
+//.
 //. The idea is that you can compose this function with one that returns a
 //. Response, and reject any responses that don't meet the expected status
 //. code.
-
+//.
 //. In combination with [`responseToError`](#responseToError), you can then
 //. flatten it back into the outer Future. The usage example under the
 //. [Http](#http) section shows this.
-export const acceptStatus = code => res => (
-  code === (Response.message (res)).statusCode ? resolve (res) : reject (res)
-);
+export const acceptStatus = code => matchStatus (reject) ({[code]: resolve});
 
 //# bufferMessage :: Charset -> IncomingMessage -> Future Error String
 //.

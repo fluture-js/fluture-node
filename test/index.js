@@ -224,6 +224,12 @@ test ('autoBufferResponse', () => Promise.all ([
 
 const respond200 = mockResponse ({}) (Buffer.from ('hello'));
 
+test ('matchStatus', () => Promise.all ([
+  assertResolves (fl.map (fn.matchStatus (() => 'else') ({200: () => '200', 201: () => '201'})) (mockResponse ({code: 400}) (Buffer.from ('hello')))) ('else'),
+  assertResolves (fl.map (fn.matchStatus (() => 'else') ({200: () => '200', 201: () => '201'})) (mockResponse ({code: 200}) (Buffer.from ('hello')))) ('200'),
+  assertResolves (fl.map (fn.matchStatus (() => 'else') ({200: () => '200', 201: () => '201'})) (mockResponse ({code: 201}) (Buffer.from ('hello')))) ('201'),
+]));
+
 test ('acceptStatus', () => Promise.all ([
   assertResolves (fl.map (thenBuffer) (fl.map (fn.acceptStatus (200)) (respond200)))
                  (fl.resolve ('hello')),
