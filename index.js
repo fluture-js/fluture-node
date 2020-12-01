@@ -6,6 +6,8 @@
 //. $ npm install fluture fluture-node
 //. ```
 //.
+//. Skip to the [Http section](#http) for the main code example.
+//.
 //. ## API
 
 import http from 'http';
@@ -191,21 +193,22 @@ export const immediate = x => Future ((rej, res) => {
 //. below, in order to cover a wide variety of HTTP-related use cases.
 //.
 //. ```js
-//. import {map, chain, chainRej, encase, fork} from 'fluture';
+//. import {reject, map, chain, encase, fork} from 'fluture';
 //. import {retrieve,
-//.         acceptStatus,
+//.         matchStatus,
 //.         autoBufferResponse,
 //.         responseToError} from './index.js';
 //.
-//. const rejectUnacceptable = res => (
-//.   acceptStatus (200) (res)
-//.   .pipe (chainRej (responseToError))
+//. const json = res => (
+//.   chain (encase (JSON.parse)) (autoBufferResponse (res))
+//. );
+//.
+//. const notFound = res => (
+//.   chain (({message}) => reject (new Error (message))) (json (res))
 //. );
 //.
 //. retrieve ('https://api.github.com/users/Avaq') ({'User-Agent': 'Avaq'})
-//. .pipe (chain (rejectUnacceptable))
-//. .pipe (chain (autoBufferResponse))
-//. .pipe (chain (encase (JSON.parse)))
+//. .pipe (chain (matchStatus (responseToError) ({200: json, 404: notFound})))
 //. .pipe (map (avaq => avaq.name))
 //. .pipe (fork (console.error) (console.log));
 //. ```
@@ -213,23 +216,43 @@ export const immediate = x => Future ((rej, res) => {
 //. The example above will either:
 //.
 //. 1. log `"Aldwin Vlasblom"` to the terminal if nothing weird happens; or
-//. 2. log an error to the console if:
+//. 2. Report a 404 error using the message returned from the server; or
+//. 3. log an error to the console if:
 //.     * a network error occurs;
-//.     * the response code is not 200; or
+//.     * the response code is not what we expect; or
 //.     * the JSON is malformed.
 //.
-//. Note that we were in control of how an unexpected status was treated,
-//. how an erroneous response would be formatted as an error message,
-//. whether the response would be parsed as JSON, and how a failure of parsing
-//. the JSON would have been treated.
+//. Note that we were in control of the following:
 //.
-//. The goal of the functions below us to give you as much control over HTTP
-//. requests as possible, while still keeping boilerplate low by leveraging
-//. function composition.
+//. - How an unexpected status was treated: We passed in a handler to
+//.   [`matchStatus`](#matchStatus).
+//.   We used [`responseToError`](#responseToError), conviently provided by
+//.   this library, but we could have used a custom mechanism.
+//.
+//. - How responses with expected status codes are treated:
+//.   The [`matchStatus`](#matchStatus) function lets us provide a handler
+//.   based on the status code of the response. Each handler has full control
+//.   over the response.
+//.
+//. - How the response body is buffered and decoded: Our `json` function uses
+//.   [`autoBufferResponse`](#autoBufferResponse) to buffer and decode the
+//.   response according to the mime type provided in the headers. However, we
+//.   could have used lower level functions, such as
+//.   [`bufferResponse`](#bufferResponse) or even just [`buffer`](#buffer).
+//.
+//. - How the response body is parsed: We used [`Fluture.encase`][] with
+//.   [`JSON.parse`][] to parse JSON with a safe failure path. However, we
+//.   could have used a more refined approach to parsing the JSON, for
+//.   example by using [`S.parseJson`][].
+//.
+//. The goal is to give you as much control over HTTP requests and responses
+//. as possible, while still keeping boilerplate low by leveraging function
+//. composition.
 //.
 //. This contrasts with many of the popular HTTP client libraries out there,
-//. which often make decisions for you, taking away control in an attempt to
-//. provide a smoother usage experience.
+//. which either make decisions for you, taking away control in an attempt to
+//. provide a smoother usage experience, or which take complicated structures
+//. of interacting options to attempt to cater to as many cases as possible.
 
 //    defaultCharset :: String
 const defaultCharset = 'utf8';
@@ -554,6 +577,9 @@ export const responseToError = response => {
 
 //. [`process.nextTick`]: https://nodejs.org/api/process.html#process_process_nexttick_callback_args
 //. [`setImmediate`]: https://nodejs.org/api/timers.html#timers_setimmediate_callback_args
+//. [`S.parseJson`]: https://sanctuary.js.org/#parseJson
+//. [`Fluture.encase`]: https://github.com/fluture-js/Fluture#encase
+//. [`JSON.parse`]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
 
 //. [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer
 //. [Fluture]: https://github.com/fluture-js/Fluture
