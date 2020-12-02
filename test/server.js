@@ -7,9 +7,35 @@ export const echoHandler = req => res => body => fl.attempt (() => {
   res.end (Buffer.from (`${req.method}/${body}`));
 });
 
+export const redirectHandler = req => res => body => fl.attempt (() => {
+  res.writeHead (301, {'Location': '/echo'});
+  res.end ();
+});
+
+export const redirectPostHandler = req => res => body => fl.attempt (() => {
+  res.writeHead (305, {'Location': '/echo'});
+  res.end ();
+});
+
+export const selfRedirectHandler = req => res => body => fl.attempt (() => {
+  res.writeHead (301, {'Location': '/self-redirect'});
+  res.end ();
+});
+
+export const redirectLoopHandler = req => res => body => fl.attempt (() => {
+  res.writeHead (301, {'Location': req.url.replace (/[ab]$/, x => x === 'a' ? 'b' : 'a')});
+  res.end ();
+});
+
 export const routes = Object.assign (Object.create (null), {
   'GET /echo': echoHandler,
   'POST /echo': echoHandler,
+  'GET /redirect': redirectHandler,
+  'POST /redirect': redirectHandler,
+  'POST /redirect-post': redirectPostHandler,
+  'GET /self-redirect': selfRedirectHandler,
+  'GET /redirect-loop-a': redirectLoopHandler,
+  'GET /redirect-loop-b': redirectLoopHandler,
 });
 
 export const routeRequest = req => res => body => {

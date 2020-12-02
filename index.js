@@ -14,6 +14,7 @@ import http from 'http';
 import https from 'https';
 import qs from 'querystring';
 import {Readable, pipeline} from 'stream';
+import {isDeepStrictEqual} from 'util';
 import {lookup} from 'dns';
 
 import {
@@ -197,6 +198,7 @@ export const immediate = x => Future ((rej, res) => {
 //. import {reject, map, chain, encase, fork} from 'fluture';
 //. import {retrieve,
 //.         matchStatus,
+//.         followRedirects,
 //.         autoBufferResponse,
 //.         responseToError} from './index.js';
 //.
@@ -209,6 +211,7 @@ export const immediate = x => Future ((rej, res) => {
 //. );
 //.
 //. retrieve ('https://api.github.com/users/Avaq') ({'User-Agent': 'Avaq'})
+//. .pipe (chain (followRedirects (20)))
 //. .pipe (chain (matchStatus (responseToError) ({200: json, 404: notFound})))
 //. .pipe (map (avaq => avaq.name))
 //. .pipe (fork (console.error) (console.log));
@@ -224,6 +227,12 @@ export const immediate = x => Future ((rej, res) => {
 //.     * the JSON is malformed.
 //.
 //. Note that we were in control of the following:
+//.
+//. - How redirects are followed: We use [`followRedirects`](#followRedirects)
+//.   with a maxmum of 20 redirects, but we could have used a different
+//.   redirection function using [`followRedirectsWith`](#followRedirectsWith)
+//.   with the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy) or
+//.   even a fully custom policy.
 //.
 //. - How an unexpected status was treated: We passed in a handler to
 //.   [`matchStatus`](#matchStatus).
@@ -519,6 +528,209 @@ export const matchStatus = f => fs => res => {
   return (hasProp (statusCode) (fs) ? fs[statusCode] : f) (res);
 };
 
+// mergeUrls :: Url -> Any -> String
+const mergeUrls = base => input => (
+  typeof input === 'string' ?
+  new URL (input, base).href :
+  base
+);
+
+//# redirectAnyRequest :: Response -> Request
+//.
+//. A redirection strategy that simply reissues the original Request to the
+//. Location specified in the given Response.
+//.
+//. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
+//. the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
+export const redirectAnyRequest = response => {
+  const {headers: {location}} = Response.message (response);
+  const original = Response.request (response);
+  const oldUrl = Request.url (original);
+  const newUrl = mergeUrls (oldUrl) (location);
+  return (Request (Request.options (original))
+                  (newUrl)
+                  (Request.body (original)));
+};
+
+//# redirectIfGetMethod :: Response -> Request
+//.
+//. A redirection strategy that simply reissues the original Request to the
+//. Location specified in the given Response, but only if the original request
+//. was using the GET method.
+//.
+//. Used in [`followRedirectsStrict`](#followRedirectsStrict).
+export const redirectIfGetMethod = response => {
+  const {method} = cleanRequestOptions (Response.request (response));
+  return (
+    method === 'GET' ?
+    redirectAnyRequest (response) :
+    Response.request (response)
+  );
+};
+
+//# redirectUsingGetMethod :: Response -> Request
+//.
+//. A redirection strategy that sends a new GET request based on the original
+//. request to the Location specified in the given Response. If the response
+//. does not contain a valid location, the request is not redirected.
+//.
+//. The original request method and body are discarded, but all the options
+//. are preserved.
+//.
+//. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
+//. the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
+export const redirectUsingGetMethod = response => {
+  const original = Response.request (response);
+  const options = Object.assign ({}, Request.options (original), {
+    method: 'GET',
+  });
+  const request = Request (options) (Request.url (original)) (emptyStream);
+  return redirectAnyRequest (Response (request) (Response.message (response)));
+};
+
+// See https://developer.mozilla.org/docs/Web/HTTP/Headers#Conditionals
+const conditionHeaders = [
+  'if-match',
+  'if-modified-since',
+  'if-none-match',
+  'if-unmodified-since',
+];
+
+//# retryWithoutCondition :: Response -> Request
+//.
+//. A redirection strategy that removes any caching headers if present and
+//. retries the request, or does nothing if no caching headers were present
+//. on the original request.
+//.
+//. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy).
+export const retryWithoutCondition = response => {
+  const original = Response.request (response);
+  const options = Request.options (original);
+  const {method} = cleanRequestOptions (original);
+  const headers = Object.entries (options.headers || {});
+  const filteredHeaders = headers.filter (([name]) => (
+    !(conditionHeaders.includes (name.toLowerCase ()))
+  ));
+  const request = Request (Object.assign ({}, options, {
+    headers: Object.fromEntries (filteredHeaders),
+  })) (Request.url (original)) (Request.body (original));
+  return method === 'GET' ? request : original;
+};
+
+//# defaultRedirectionPolicy :: Response -> Request
+//.
+//. Carefully follows redirects in strict accordance with
+//. [RFC2616 Section 10.3][].
+//.
+//. Redirections with status codes 301, 302, and 307 are only followed if the
+//. original request used the GET method, and redirects with status code 304
+//. are left alone for a caching layer to deal with.
+//.
+//. This redirection policy is used by default in the
+//. [`followRedirects`](#followRedirects) function. You can extend it, using
+//. [`matchStatus`](#matchStatus) to create a custom redirection policy, as
+//. shown in the example:
+//.
+//. See also [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
+//.
+//. ```js
+//. const redirectToBestOption = () => {
+//.   // Somehow figure out which URL to redirect to.
+//. };
+//.
+//. const myRedirectionPolicy = matchStatus (defaultRedirectionPolicy) ({
+//.   300: redirectToBestOption,
+//.   301: redirectUsingGetMethod,
+//. });
+//.
+//. retrieve ('https://example.com') ({})
+//. .pipe (chain (followRedirectsWith (myRedirectionPolicy) (10)))
+//. ```
+export const defaultRedirectionPolicy = matchStatus (Response.request) ({
+  301: redirectIfGetMethod,
+  302: redirectIfGetMethod,
+  303: redirectUsingGetMethod,
+  305: redirectAnyRequest,
+  307: redirectIfGetMethod,
+});
+
+//# aggressiveRedirectionPolicy :: Response -> Request
+//.
+//. Aggressively follows redirects in mild violation of
+//. [RFC2616 Section 10.3][]. In particular, anywhere that a redirection
+//. should be interrupted for user confirmation or caching, this policy
+//. follows the redirection nonetheless.
+//.
+//. Redirections with status codes 301, 302, and 307 are always followed
+//. without user intervention, and redirects with status code 304 are
+//. retried without conditions if the original request had any conditional
+//. headers.
+//.
+//. See also [`defaultRedirectionPolicy`](defaultRedirectionPolicy).
+//.
+//. ```js
+//. retrieve ('https://example.com') ({})
+//. .pipe (chain (followRedirectsWith (aggressiveRedirectionPolicy) (10)))
+//. ```
+export const aggressiveRedirectionPolicy = matchStatus (Response.request) ({
+  301: redirectAnyRequest,
+  302: redirectAnyRequest,
+  303: redirectUsingGetMethod,
+  304: retryWithoutCondition,
+  305: redirectAnyRequest,
+  307: redirectAnyRequest,
+});
+
+// requestsEquivalent :: Request -> Request -> Boolean
+const requestsEquivalent = left => right => (
+  isDeepStrictEqual (
+    cleanRequestOptions (left),
+    cleanRequestOptions (right)
+  ) &&
+  Request.url (left) === Request.url (right) &&
+  Request.body (left) === Request.body (right)
+);
+
+//# followRedirectsWith :: (Response -> Request) -> Number -> Response -> Future Error Response
+//.
+//. Given a function that take a Response and produces a new Request, and a
+//. "maximum" number, recursively keeps resolving new requests until a request
+//. is encountered that was seen before, or the maximum number is reached.
+//.
+//. See [`followRedirects`](#followRedirects) for an out-of-the-box redirect-
+//. follower. See [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy)
+//. and [`defaultRedirectionPolicy`](defaultRedirectionPolicy) for
+//. additional usage examples.
+export const followRedirectsWith = strategy => _max => _response => {
+  const seen = [];
+  const followUp = max => response => {
+    if (max < 1) {
+      return resolve (response);
+    }
+    seen.push (Response.request (response));
+    const nextRequest = strategy (response);
+    for (let i = seen.length - 1; i >= 0; i -= 1) {
+      if (requestsEquivalent (seen[i]) (nextRequest)) {
+        return resolve (response);
+      }
+    }
+    return (
+      sendRequest (nextRequest)
+      .pipe (mapRej (e => new Error ('After redirect: ' + e.message)))
+      .pipe (chain (followUp (max - 1)))
+    );
+  };
+  return followUp (_max) (_response);
+};
+
+//# followRedirects :: Number -> Response -> Future Error Response
+//.
+//. Given the maximum numbers of redirections, follows redirects according to
+//. the [default redirection policy](#defaultRedirectionPolicy).
+//.
+//. See the [Http section](#http) for a usage example.
+export const followRedirects = followRedirectsWith (defaultRedirectionPolicy);
+
 //# acceptStatus :: Number -> Response -> Future Response Response
 //.
 //. This function "tags" a [Response](#Response) based on a given status code.
@@ -611,3 +823,5 @@ export const responseToError = response => {
 //. [http options]: https://nodejs.org/api/http.html#http_http_request_url_options_callback
 //. [IncomingMessage]: https://nodejs.org/api/http.html#http_class_http_incomingmessage
 //. [Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable
+
+//. [RFC2616 Section 10.3]: https://tools.ietf.org/html/rfc2616#section-10.3
