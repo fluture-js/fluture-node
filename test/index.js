@@ -4,6 +4,7 @@ import test from 'oletus';
 import {Readable} from 'stream';
 import {equivalence, equality as eq} from 'fluture/test/assertions.js';
 import {withTestServer} from './server.js';
+import {lookup} from 'dns';
 
 import * as fn from '../index.js';
 
@@ -150,6 +151,40 @@ test ('Response', () => {
   const response = fn.Response (request) (message);
   eq (fn.Response.request (response)) (request);
   eq (fn.Response.message (response)) (message);
+});
+
+test ('cleanRequestOptions', () => {
+  const req = o => fn.Request (o) ('https://example.com') (fn.emptyStream);
+  eq (fn.cleanRequestOptions (req ({}))) ({
+    agent: undefined,
+    createConnection: undefined,
+    defaultPort: undefined,
+    family: undefined,
+    headers: {},
+    insecureHTTPParser: false,
+    localAddress: undefined,
+    lookup: lookup,
+    maxHeaderSize: 16384,
+    method: 'GET',
+    setHost: true,
+    socketPath: undefined,
+    timeout: undefined,
+  });
+  eq (fn.cleanRequestOptions (req ({agent: {defaultPort: 42}}))) ({
+    agent: {defaultPort: 42},
+    createConnection: undefined,
+    defaultPort: 42,
+    family: undefined,
+    headers: {},
+    insecureHTTPParser: false,
+    localAddress: undefined,
+    lookup: lookup,
+    maxHeaderSize: 16384,
+    method: 'GET',
+    setHost: true,
+    socketPath: undefined,
+    timeout: undefined,
+  });
 });
 
 test ('bufferResponse', () => Promise.all ([

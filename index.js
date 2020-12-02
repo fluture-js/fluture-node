@@ -14,6 +14,7 @@ import http from 'http';
 import https from 'https';
 import qs from 'querystring';
 import {Readable, pipeline} from 'stream';
+import {lookup} from 'dns';
 
 import {
   Future,
@@ -285,7 +286,9 @@ const getRequestModule = protocol => {
 //.
 //. Takes the following arguments:
 //.
-//. 1. An Object containing [http options][].
+//. 1. An Object containing any [http options][] except: `auth`, `host`,
+//.    `hostname`, `path`, `port`, and `protocol`; because they are part of
+//.    the URL, and `signal`; because Fluture handles the cancellation.
 //. 2. A String containing the request URL.
 //. 3. A Future of a [Readable][] stream of [Buffer][]s to be used as the
 //.    request body. Note that the Future must produce a brand new Stream
@@ -330,6 +333,28 @@ Response.request = ({request}) => request;
 //. Get the message out of a Response.
 Response.message = ({message}) => message;
 
+// cleanRequestOptions :: Request -> Object
+export const cleanRequestOptions = request => {
+  const options = Request.options (request);
+  return {
+    agent: options.agent,
+    createConnection: options.createConnection,
+    defaultPort: options.defaultPort || (
+      options.agent && options.agent.defaultPort
+    ),
+    family: options.family,
+    headers: options.headers || {},
+    insecureHTTPParser: options.insecureHTTPParser === true,
+    localAddress: options.localAddress,
+    lookup: options.lookup || lookup,
+    maxHeaderSize: options.maxHeaderSize || 16384,
+    method: (options.method || 'GET').toUpperCase (),
+    setHost: options.setHost !== false,
+    socketPath: options.socketPath,
+    timeout: options.timeout,
+  };
+};
+
 //# sendRequest :: Request -> Future Error Response
 //.
 //. This is the "lowest level" function for making HTTP requests. It does not
@@ -362,7 +387,7 @@ Response.message = ({message}) => message;
 export const sendRequest = request => {
   const location = new URL (Request.url (request));
   const makeRequest = lib => stream => Future ((rej, res) => {
-    const req = lib.request (location, Request.options (request));
+    const req = lib.request (location, cleanRequestOptions (request));
     const onResponse = response => res (Response (request) (response));
     req.once ('response', onResponse);
     pipeline (stream, req, e => e && rej (e));
