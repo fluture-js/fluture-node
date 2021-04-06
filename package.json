@@ -14,12 +14,12 @@
     "timers"
   ],
   "type": "module",
-  "main": "index.cjs",
+  "main": "./dist/cjs.js",
   "module": "index.js",
   "exports": {
     ".": {
       "import": "./index.js",
-      "require": "./index.cjs"
+      "require": "./dist/cjs.js"
     },
     "./index.js": "./index.js"
   },
@@ -36,7 +36,7 @@
     "url": "git://github.com/fluture-js/fluture-node.git"
   },
   "files": [
-    "/index.cjs",
+    "/dist",
     "/index.js",
     "/LICENSE",
     "/package.json",

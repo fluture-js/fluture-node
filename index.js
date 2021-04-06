@@ -2,11 +2,17 @@
 //.
 //. FP-style HTTP and streaming utils for Node based on [Fluture][].
 //.
+//. Skip to the [Http section](#http) for the main code example.
+//.
+//. ## Usage
+//.
 //. ```console
-//. $ npm install fluture fluture-node
+//. $ npm install --save fluture fluture-node
 //. ```
 //.
-//. Skip to the [Http section](#http) for the main code example.
+//. On Node 12 and up, this module can be loaded directly with `import` or
+//. `require`. On Node versions below 12, `require` or the [esm][]-loader can
+//. be used.
 //.
 //. ## API
 
@@ -825,3 +831,4 @@ export const responseToError = response => {
 //. [Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable
 
 //. [RFC2616 Section 10.3]: https://tools.ietf.org/html/rfc2616#section-10.3
+//. [esm]: https://github.com/standard-things/esm
