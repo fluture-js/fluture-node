@@ -206,7 +206,7 @@ export const immediate = x => Future ((rej, res) => {
 //.         matchStatus,
 //.         followRedirects,
 //.         autoBufferResponse,
-//.         responseToError} from './index.js';
+//.         responseToError} from 'fluture-node';
 //.
 //. const json = res => (
 //.   chain (encase (JSON.parse)) (autoBufferResponse (res))
