@@ -534,12 +534,19 @@ export const matchStatus = f => fs => res => {
   return (hasProp (statusCode) (fs) ? fs[statusCode] : f) (res);
 };
 
-// mergeUrls :: Url -> Any -> String
-const mergeUrls = base => input => (
+// mergeUrls :: (Url, Any) -> String
+const mergeUrls = (base, input) => (
   typeof input === 'string' ?
   new URL (input, base).href :
   base
 );
+
+// sameHost :: (Url, Url) -> Boolean
+const sameHost = (parent, child) => {
+  const p = new URL (parent);
+  const c = new URL (child);
+  return p.host === c.host || c.host.endsWith ('.' + p.host);
+};
 
 // overHeaders :: (Request, Array2 String String -> Array2 String String)
 //             -> Request
@@ -551,10 +558,19 @@ const overHeaders = (request, f) => {
                  (Request.body (request));
 };
 
+// confidentialHeaders :: Array String
+const confidentialHeaders = [
+  'authorization',
+  'cookie',
+];
+
 //# redirectAnyRequest :: Response -> Request
 //.
 //. A redirection strategy that simply reissues the original Request to the
 //. Location specified in the given Response.
+//.
+//. If the new location is on an external host, then any confidential headers
+//. (such as the cookie header) will be dropped from the new request.
 //.
 //. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
 //. the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
@@ -562,10 +578,14 @@ export const redirectAnyRequest = response => {
   const {headers: {location}} = Response.message (response);
   const original = Response.request (response);
   const oldUrl = Request.url (original);
-  const newUrl = mergeUrls (oldUrl) (location);
-  return (Request (Request.options (original))
-                  (newUrl)
-                  (Request.body (original)));
+  const newUrl = mergeUrls (oldUrl, location);
+  const request = Request (Request.options (original))
+                          (newUrl)
+                          (Request.body (original));
+
+  return sameHost (oldUrl, newUrl) ? request : overHeaders (request, xs => (
+    xs.filter (([name]) => !confidentialHeaders.includes (name.toLowerCase ()))
+  ));
 };
 
 //# redirectIfGetMethod :: Response -> Request
@@ -573,6 +593,9 @@ export const redirectAnyRequest = response => {
 //. A redirection strategy that simply reissues the original Request to the
 //. Location specified in the given Response, but only if the original request
 //. was using the GET method.
+//.
+//. If the new location is on an external host, then any confidential headers
+//. (such as the cookie header) will be dropped from the new request.
 //.
 //. Used in [`followRedirectsStrict`](#followRedirectsStrict).
 export const redirectIfGetMethod = response => {
@@ -590,8 +613,10 @@ export const redirectIfGetMethod = response => {
 //. request to the Location specified in the given Response. If the response
 //. does not contain a valid location, the request is not redirected.
 //.
-//. The original request method and body are discarded, but all the options
-//. are preserved.
+//. The original request method and body are discarded, but other options
+//. are preserved. If the new location is on an external host, then any
+//. confidential headers (such as the cookie header) will be dropped from the
+//. new request.
 //.
 //. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
 //. the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
