@@ -541,6 +541,16 @@ const mergeUrls = base => input => (
   base
 );
 
+// overHeaders :: (Request, Array2 String String -> Array2 String String)
+//             -> Request
+const overHeaders = (request, f) => {
+  const options = cleanRequestOptions (request);
+  const headers = Object.fromEntries (f (Object.entries (options.headers)));
+  return Request (Object.assign ({}, Request.options (request), {headers}))
+                 (Request.url (request))
+                 (Request.body (request));
+};
+
 //# redirectAnyRequest :: Response -> Request
 //.
 //. A redirection strategy that simply reissues the original Request to the
@@ -611,15 +621,10 @@ const conditionHeaders = [
 //. Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy).
 export const retryWithoutCondition = response => {
   const original = Response.request (response);
-  const options = Request.options (original);
   const {method} = cleanRequestOptions (original);
-  const headers = Object.entries (options.headers || {});
-  const filteredHeaders = headers.filter (([name]) => (
+  const request = overHeaders (original, xs => xs.filter (([name]) => (
     !(conditionHeaders.includes (name.toLowerCase ()))
-  ));
-  const request = Request (Object.assign ({}, options, {
-    headers: Object.fromEntries (filteredHeaders),
-  })) (Request.url (original)) (Request.body (original));
+  )));
   return method === 'GET' ? request : original;
 };
 
