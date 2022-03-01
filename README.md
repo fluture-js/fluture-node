@@ -18,7 +18,7 @@ be used.
 
 ### EventEmitter
 
-#### <a name="once" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L42">`once :: String -⁠> EventEmitter -⁠> Future Error a`</a>
+#### <a name="once" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L42">`once :: String -⁠> EventEmitter -⁠> Future Error a`</a>
 
 Resolve a Future with the first event emitted over
 the given event emitter under the given event name.
@@ -35,7 +35,7 @@ Future.of (42);
 
 ### Buffer
 
-#### <a name="encode" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L76">`encode :: Charset -⁠> Buffer -⁠> Future Error String`</a>
+#### <a name="encode" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L76">`encode :: Charset -⁠> Buffer -⁠> Future Error String`</a>
 
 Given an encoding and a [Buffer][], returns a Future of the result of
 encoding said buffer using the given encoding. The Future will reject
@@ -48,7 +48,7 @@ with an Error if the encoding is unknown.
 
 ### Stream
 
-#### <a name="streamOf" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L93">`streamOf :: Buffer -⁠> Future a (Readable Buffer)`</a>
+#### <a name="streamOf" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L93">`streamOf :: Buffer -⁠> Future a (Readable Buffer)`</a>
 
 Given a [Buffer][], returns a Future of a [Readable][] stream which will
 emit the given Buffer before ending.
@@ -57,12 +57,12 @@ The stream is wrapped in a Future because creation of a stream causes
 side-effects if it's not consumed in time, making it safer to pass it
 around wrapped in a Future.
 
-#### <a name="emptyStream" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L109">`emptyStream :: Future a (Readable Buffer)`</a>
+#### <a name="emptyStream" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L109">`emptyStream :: Future a (Readable Buffer)`</a>
 
 A [Readable][] stream which ends after emiting zero bytes. Can be useful
 as an empty [`Request`](#Request) body, for example.
 
-#### <a name="buffer" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L115">`buffer :: Readable a -⁠> Future Error (Array a)`</a>
+#### <a name="buffer" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L115">`buffer :: Readable a -⁠> Future Error (Array a)`</a>
 
 Buffer all data on a [Readable][] stream into a Future of an Array.
 
@@ -80,7 +80,7 @@ itself from the Stream.
 Future.of ([Buffer.from ('hello'), Buffer.from ('world')]);
 ```
 
-#### <a name="bufferString" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L154">`bufferString :: Charset -⁠> Readable Buffer -⁠> Future Error String`</a>
+#### <a name="bufferString" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L154">`bufferString :: Charset -⁠> Readable Buffer -⁠> Future Error String`</a>
 
 A version of [`buffer`](#buffer) specialized in Strings.
 
@@ -89,7 +89,7 @@ a Future containing a String with the fully buffered and encoded result.
 
 ### Event Loop
 
-#### <a name="instant" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L166">`instant :: b -⁠> Future a b`</a>
+#### <a name="instant" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L166">`instant :: b -⁠> Future a b`</a>
 
 Resolves a Future with the given value in the next tick,
 using [`process.nextTick`][]. The scheduled job cannot be
@@ -101,7 +101,7 @@ blocking the event loop until it's completed.
 Future.of ('noodles')
 ```
 
-#### <a name="immediate" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L182">`immediate :: b -⁠> Future a b`</a>
+#### <a name="immediate" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L182">`immediate :: b -⁠> Future a b`</a>
 
 Resolves a Future with the given value in the next tick,
 using [`setImmediate`][]. This job will run as soon as all
@@ -188,7 +188,7 @@ which either make decisions for you, taking away control in an attempt to
 provide a smoother usage experience, or which take complicated structures
 of interacting options to attempt to cater to as many cases as possible.
 
-#### <a name="Request" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L297">`Request :: Object -⁠> Url -⁠> Future Error (Readable Buffer) -⁠> Request`</a>
+#### <a name="Request" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L297">`Request :: Object -⁠> Url -⁠> Future Error (Readable Buffer) -⁠> Request`</a>
 
 Constructs a value of type Request to be used as an argument for
 functions such as [`sendRequest`](#sendRequest).
@@ -206,19 +206,19 @@ Takes the following arguments:
 
 See [`sendRequest`](#sendRequest) for a usage example.
 
-#### <a name="Request.options" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L316">`Request.options :: Request -⁠> Object`</a>
+#### <a name="Request.options" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L316">`Request.options :: Request -⁠> Object`</a>
 
 Get the options out of a Request.
 
-#### <a name="Request.url" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L321">`Request.url :: Request -⁠> Url`</a>
+#### <a name="Request.url" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L321">`Request.url :: Request -⁠> Url`</a>
 
 Get the url out of a Request.
 
-#### <a name="Request.body" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L326">`Request.body :: Request -⁠> Future Error (Readable Buffer)`</a>
+#### <a name="Request.body" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L326">`Request.body :: Request -⁠> Future Error (Readable Buffer)`</a>
 
 Get the body out of a Request.
 
-#### <a name="Response" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L331">`Response :: Request -⁠> IncomingMessage -⁠> Response`</a>
+#### <a name="Response" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L331">`Response :: Request -⁠> IncomingMessage -⁠> Response`</a>
 
 Constructs a value of type Response. These values are typically created
 for you by functions such as [`sendRequest`](#sendRequest).
@@ -227,15 +227,15 @@ Takes the following arguments:
 1. A [Request](#Request).
 2. An [IncomingMessage][] assumed to belong to the Request.
 
-#### <a name="Response.request" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L341">`Response.request :: Response -⁠> Request`</a>
+#### <a name="Response.request" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L341">`Response.request :: Response -⁠> Request`</a>
 
 Get the request out of a Response.
 
-#### <a name="Response.message" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L346">`Response.message :: Response -⁠> IncomingMessage`</a>
+#### <a name="Response.message" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L346">`Response.message :: Response -⁠> IncomingMessage`</a>
 
 Get the message out of a Response.
 
-#### <a name="sendRequest" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L373">`sendRequest :: Request -⁠> Future Error Response`</a>
+#### <a name="sendRequest" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L373">`sendRequest :: Request -⁠> Future Error Response`</a>
 
 This is the "lowest level" function for making HTTP requests. It does not
 handle buffering, encoding, content negotiation, or anything really.
@@ -265,7 +265,7 @@ sendRequest (BinaryPostRequest ('https://example.com') (eventualBody));
 If you want to use this function to transfer a stream of data, don't forget
 to set the Transfer-Encoding header to "chunked".
 
-#### <a name="retrieve" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L422">`retrieve :: Url -⁠> StrMap String -⁠> Future Error Response`</a>
+#### <a name="retrieve" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L422">`retrieve :: Url -⁠> StrMap String -⁠> Future Error Response`</a>
 
 A version of [`sendRequest`](#sendRequest) specialized in the `GET` method.
 
@@ -276,7 +276,7 @@ makes a GET requests to the given resource.
 retrieve ('https://api.github.com/users/Avaq') ({'User-Agent': 'Avaq'})
 ```
 
-#### <a name="send" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L436">`send :: Mimetype -⁠> Method -⁠> Url -⁠> StrMap String -⁠> Buffer -⁠> Future Error Response`</a>
+#### <a name="send" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L436">`send :: Mimetype -⁠> Method -⁠> Url -⁠> StrMap String -⁠> Buffer -⁠> Future Error Response`</a>
 
 A version of [`sendRequest`](#sendRequest) for sending arbitrary data to
 a server. There's also more specific versions for sending common types of
@@ -294,7 +294,7 @@ This function will always send the Content-Type and Content-Length headers,
 alongside the provided headers. Manually provoding either of these headers
 override those generated by this function.
 
-#### <a name="sendJson" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L461">`sendJson :: Method -⁠> String -⁠> StrMap String -⁠> JsonValue -⁠> Future Error Response`</a>
+#### <a name="sendJson" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L461">`sendJson :: Method -⁠> String -⁠> StrMap String -⁠> JsonValue -⁠> Future Error Response`</a>
 
 A version of [`send`](#send) specialized in sending JSON.
 
@@ -309,7 +309,7 @@ sendJson ('PUT')
          ({name: 'Bob', email: 'bob@example.com'});
 ```
 
-#### <a name="sendForm" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L480">`sendForm :: Method -⁠> String -⁠> StrMap String -⁠> JsonValue -⁠> Future Error Response`</a>
+#### <a name="sendForm" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L480">`sendForm :: Method -⁠> String -⁠> StrMap String -⁠> JsonValue -⁠> Future Error Response`</a>
 
 A version of [`send`](#send) specialized in sending form data.
 
@@ -324,7 +324,7 @@ sendForm ('POST')
          ({name: 'Bob', email: 'bob@example.com'});
 ```
 
-#### <a name="matchStatus" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L499">`matchStatus :: (Response -⁠> a) -⁠> StrMap (Response -⁠> a) -⁠> Response -⁠> a`</a>
+#### <a name="matchStatus" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L499">`matchStatus :: (Response -⁠> a) -⁠> StrMap (Response -⁠> a) -⁠> Response -⁠> a`</a>
 
 Transform a [`Response`](#Response) based on its status code.
 
@@ -358,7 +358,7 @@ matchStatus (processResponse) ({
 });
 ```
 
-#### <a name="redirectAnyRequest" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L567">`redirectAnyRequest :: Response -⁠> Request`</a>
+#### <a name="redirectAnyRequest" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L568">`redirectAnyRequest :: Response -⁠> Request`</a>
 
 A redirection strategy that simply reissues the original Request to the
 Location specified in the given Response.
@@ -369,7 +369,7 @@ If the new location is on an external host, then any confidential headers
 Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
 the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
 
-#### <a name="redirectIfGetMethod" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L591">`redirectIfGetMethod :: Response -⁠> Request`</a>
+#### <a name="redirectIfGetMethod" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L592">`redirectIfGetMethod :: Response -⁠> Request`</a>
 
 A redirection strategy that simply reissues the original Request to the
 Location specified in the given Response, but only if the original request
@@ -380,7 +380,7 @@ If the new location is on an external host, then any confidential headers
 
 Used in [`followRedirectsStrict`](#followRedirectsStrict).
 
-#### <a name="redirectUsingGetMethod" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L610">`redirectUsingGetMethod :: Response -⁠> Request`</a>
+#### <a name="redirectUsingGetMethod" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L611">`redirectUsingGetMethod :: Response -⁠> Request`</a>
 
 A redirection strategy that sends a new GET request based on the original
 request to the Location specified in the given Response. If the response
@@ -394,7 +394,7 @@ new request.
 Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy) and
 the [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy).
 
-#### <a name="retryWithoutCondition" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L640">`retryWithoutCondition :: Response -⁠> Request`</a>
+#### <a name="retryWithoutCondition" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L641">`retryWithoutCondition :: Response -⁠> Request`</a>
 
 A redirection strategy that removes any caching headers if present and
 retries the request, or does nothing if no caching headers were present
@@ -402,7 +402,7 @@ on the original request.
 
 Used in the [`defaultRedirectionPolicy`](#defaultRedirectionPolicy).
 
-#### <a name="defaultRedirectionPolicy" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L656">`defaultRedirectionPolicy :: Response -⁠> Request`</a>
+#### <a name="defaultRedirectionPolicy" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L657">`defaultRedirectionPolicy :: Response -⁠> Request`</a>
 
 Carefully follows redirects in strict accordance with
 [RFC2616 Section 10.3][].
@@ -432,7 +432,7 @@ retrieve ('https://example.com') ({})
 .pipe (chain (followRedirectsWith (myRedirectionPolicy) (10)))
 ```
 
-#### <a name="aggressiveRedirectionPolicy" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L693">`aggressiveRedirectionPolicy :: Response -⁠> Request`</a>
+#### <a name="aggressiveRedirectionPolicy" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L694">`aggressiveRedirectionPolicy :: Response -⁠> Request`</a>
 
 Aggressively follows redirects in mild violation of
 [RFC2616 Section 10.3][]. In particular, anywhere that a redirection
@@ -451,7 +451,7 @@ retrieve ('https://example.com') ({})
 .pipe (chain (followRedirectsWith (aggressiveRedirectionPolicy) (10)))
 ```
 
-#### <a name="followRedirectsWith" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L730">`followRedirectsWith :: (Response -⁠> Request) -⁠> Number -⁠> Response -⁠> Future Error Response`</a>
+#### <a name="followRedirectsWith" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L731">`followRedirectsWith :: (Response -⁠> Request) -⁠> Number -⁠> Response -⁠> Future Error Response`</a>
 
 Given a function that take a Response and produces a new Request, and a
 "maximum" number, recursively keeps resolving new requests until a request
@@ -462,14 +462,14 @@ follower. See [`aggressiveRedirectionPolicy`](#aggressiveRedirectionPolicy)
 and [`defaultRedirectionPolicy`](defaultRedirectionPolicy) for
 additional usage examples.
 
-#### <a name="followRedirects" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L762">`followRedirects :: Number -⁠> Response -⁠> Future Error Response`</a>
+#### <a name="followRedirects" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L763">`followRedirects :: Number -⁠> Response -⁠> Future Error Response`</a>
 
 Given the maximum numbers of redirections, follows redirects according to
 the [default redirection policy](#defaultRedirectionPolicy).
 
 See the [Http section](#http) for a usage example.
 
-#### <a name="acceptStatus" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L770">`acceptStatus :: Number -⁠> Response -⁠> Future Response Response`</a>
+#### <a name="acceptStatus" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L771">`acceptStatus :: Number -⁠> Response -⁠> Future Response Response`</a>
 
 This function "tags" a [Response](#Response) based on a given status code.
 If the response status matches the given status code, the returned Future
@@ -486,7 +486,7 @@ In combination with [`responseToError`](#responseToError), you can then
 flatten it back into the outer Future. The usage example under the
 [Http](#http) section shows this.
 
-#### <a name="bufferMessage" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L788">`bufferMessage :: Charset -⁠> IncomingMessage -⁠> Future Error String`</a>
+#### <a name="bufferMessage" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L789">`bufferMessage :: Charset -⁠> IncomingMessage -⁠> Future Error String`</a>
 
 A version of [`buffer`](#buffer) specialized in [IncomingMessage][]s.
 
@@ -496,14 +496,14 @@ See also [`bufferResponse`](#bufferResponse) and
 Given a charset and an IncomingMessage, returns a Future with the buffered,
 encoded, message body.
 
-#### <a name="bufferResponse" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L802">`bufferResponse :: Charset -⁠> Response -⁠> Future Error String`</a>
+#### <a name="bufferResponse" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L803">`bufferResponse :: Charset -⁠> Response -⁠> Future Error String`</a>
 
 A composition of [`Response.message`](#Response.message) and
 [`bufferMessage`](#bufferMessage) for your convenience.
 
 See also [autoBufferResponse](#autoBufferResponse).
 
-#### <a name="autoBufferMessage" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L812">`autoBufferMessage :: IncomingMessage -⁠> Future Error String`</a>
+#### <a name="autoBufferMessage" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L813">`autoBufferMessage :: IncomingMessage -⁠> Future Error String`</a>
 
 Given an IncomingMessage, buffers and decodes the message body using the
 charset provided in the message headers. Falls back to UTF-8 if the
@@ -513,14 +513,14 @@ Returns a Future with the buffered, encoded, message body.
 
 See also [bufferMessage](#bufferMessage).
 
-#### <a name="autoBufferResponse" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L828">`autoBufferResponse :: Response -⁠> Future Error String`</a>
+#### <a name="autoBufferResponse" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L829">`autoBufferResponse :: Response -⁠> Future Error String`</a>
 
 A composition of [`Response.message`](#Response.message) and
 [`autoBufferMessage`](#autoBufferMessage) for your convenience.
 
 See also [bufferResponse](#bufferResponse).
 
-#### <a name="responseToError" href="https://github.com/fluture-js/fluture-node/blob/v4.0.1/index.js#L838">`responseToError :: Response -⁠> Future Error a`</a>
+#### <a name="responseToError" href="https://github.com/fluture-js/fluture-node/blob/v4.0.2/index.js#L839">`responseToError :: Response -⁠> Future Error a`</a>
 
 Given a [Response](#Response), returns a *rejected* Future of an instance
 of Error with a message based on the content of the response.
