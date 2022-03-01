@@ -284,6 +284,11 @@ test ('redirectAnyRequest', () => Promise.all ([
                                          headers: {location: 'https://elsewhere.com/'},
                                          request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
                  (fn.Request ({headers: {}}) ('https://elsewhere.com/') (fn.emptyStream)),
+  assertResolves (fl.map (fn.redirectAnyRequest)
+                         (mockResponse ({code: 301,
+                                         headers: {location: 'http://example.com/'},
+                                         request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
+                 (fn.Request ({headers: {}}) ('http://example.com/') (fn.emptyStream)),
 ]));
 
 test ('redirectIfGetMethod', () => Promise.all ([

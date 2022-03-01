@@ -541,11 +541,12 @@ const mergeUrls = (base, input) => (
   base
 );
 
-// sameHost :: (Url, Url) -> Boolean
-const sameHost = (parent, child) => {
+// sameOrigin :: (Url, Url) -> Boolean
+const sameOrigin = (parent, child) => {
   const p = new URL (parent);
   const c = new URL (child);
-  return p.host === c.host || c.host.endsWith ('.' + p.host);
+  return (p.protocol === c.protocol || c.protocol === 'https:') &&
+         (p.host === c.host || c.host.endsWith ('.' + p.host));
 };
 
 // overHeaders :: (Request, Array2 String String -> Array2 String String)
@@ -583,7 +584,7 @@ export const redirectAnyRequest = response => {
                           (newUrl)
                           (Request.body (original));
 
-  return sameHost (oldUrl, newUrl) ? request : overHeaders (request, xs => (
+  return sameOrigin (oldUrl, newUrl) ? request : overHeaders (request, xs => (
     xs.filter (([name]) => !confidentialHeaders.includes (name.toLowerCase ()))
   ));
 };
