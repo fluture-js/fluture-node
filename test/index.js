@@ -259,18 +259,38 @@ test ('redirectAnyRequest', () => Promise.all ([
   assertResolves (fl.map (fn.redirectAnyRequest) (mockResponse ({})))
                  (getRequest),
   assertResolves (fl.map (fn.redirectAnyRequest) (getResponse (301) ('ftp://xxx')))
-                 (fn.Request ({}) ('ftp://xxx/') (fn.emptyStream)),
+                 (fn.Request ({headers: {}}) ('ftp://xxx/') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectAnyRequest) (getResponse (301) ('/echo')))
                  (fn.Request ({}) ('https://example.com/echo') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectAnyRequest) (postResponse (301) ('/echo')))
                  (fn.Request ({method: 'POST'}) ('https://example.com/echo') (fn.streamOf (Buffer.from ('test')))),
+  assertResolves (fl.map (fn.redirectAnyRequest)
+                         (mockResponse ({code: 301,
+                                         headers: {location: 'https://example.com/path'},
+                                         request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
+                 (fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com/path') (fn.emptyStream)),
+  assertResolves (fl.map (fn.redirectAnyRequest)
+                         (mockResponse ({code: 301,
+                                         headers: {location: 'https://sub.example.com/'},
+                                         request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
+                 (fn.Request ({headers: {cookie: 'yum'}}) ('https://sub.example.com/') (fn.emptyStream)),
+  assertResolves (fl.map (fn.redirectAnyRequest)
+                         (mockResponse ({code: 301,
+                                         headers: {location: 'https://bigsub.example.com/'},
+                                         request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
+                 (fn.Request ({headers: {cookie: 'yum'}}) ('https://bigsub.example.com/') (fn.emptyStream)),
+  assertResolves (fl.map (fn.redirectAnyRequest)
+                         (mockResponse ({code: 301,
+                                         headers: {location: 'https://elsewhere.com/'},
+                                         request: fn.Request ({headers: {cookie: 'yum'}}) ('https://example.com') (fn.emptyStream)})))
+                 (fn.Request ({headers: {}}) ('https://elsewhere.com/') (fn.emptyStream)),
 ]));
 
 test ('redirectIfGetMethod', () => Promise.all ([
   assertResolves (fl.map (fn.redirectIfGetMethod) (mockResponse ({})))
                  (getRequest),
   assertResolves (fl.map (fn.redirectIfGetMethod) (getResponse (301) ('ftp://xxx')))
-                 (fn.Request ({}) ('ftp://xxx/') (fn.emptyStream)),
+                 (fn.Request ({headers: {}}) ('ftp://xxx/') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectIfGetMethod) (getResponse (301) ('/echo')))
                  (fn.Request ({}) ('https://example.com/echo') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectIfGetMethod) (postResponse (301) ('/echo')))
@@ -281,7 +301,7 @@ test ('redirectUsingGetMethod', () => Promise.all ([
   assertResolves (fl.map (fn.redirectUsingGetMethod) (mockResponse ({})))
                  (fn.Request ({method: 'GET'}) ('https://example.com') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectUsingGetMethod) (getResponse (301) ('ftp://xxx')))
-                 (fn.Request ({method: 'GET'}) ('ftp://xxx/') (fn.emptyStream)),
+                 (fn.Request ({method: 'GET', headers: {}}) ('ftp://xxx/') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectUsingGetMethod) (getResponse (200) ('/echo')))
                  (fn.Request ({method: 'GET'}) ('https://example.com/echo') (fn.emptyStream)),
   assertResolves (fl.map (fn.redirectUsingGetMethod) (postResponse (200) ('/echo')))
