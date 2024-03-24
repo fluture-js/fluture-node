@@ -562,6 +562,7 @@ const overHeaders = (request, f) => {
 // confidentialHeaders :: Array String
 const confidentialHeaders = [
   'authorization',
+  'proxy-authorization',
   'cookie',
 ];
 
