@@ -1,6 +1,6 @@
 {
   "name": "fluture-node",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "FP-style HTTP and streaming utils for Node based on Fluture",
   "keywords": [
     "buffer",
