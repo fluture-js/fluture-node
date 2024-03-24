@@ -212,8 +212,8 @@ const thenBuffer = fl.bichain (res => fl.swap (fn.bufferResponse ('utf8') (res))
 
 test ('sendRequest', () => Promise.all ([
   assertRejects (fn.sendRequest (fn.Request ({}) ('https://localhost') (fn.emptyStream)))
-                (Object.assign (new Error ('connect ECONNREFUSED 127.0.0.1:443'), {
-                  address: '127.0.0.1',
+                (Object.assign (new Error ('connect ECONNREFUSED ::1:443'), {
+                  address: '::1',
                   code: 'ECONNREFUSED',
                   errno: -111,
                   port: 443,
